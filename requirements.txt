@@ -1,0 +1,8 @@
+MarkupSafe
+Flask
+tzdata
+Flask
+Flask-Login
+plotly
+pandas
+python-dotenv

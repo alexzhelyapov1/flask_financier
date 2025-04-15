@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Сводка - {{ eff_user_login }}{% endblock %}
+
+{% block content %}
+<h2>Сводка по финансам {% if eff_user_login %}({{ eff_user_login }}){% endif %}</h2>
+<hr>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card text-center">
+          <div class="card-header">
+            Общий баланс
+          </div>
+          <div class="card-body">
+            <h3 class="card-title {% if total_sum >= 0 %}text-success{% else %}text-danger{% endif %}">
+                {{ "%.2f"|format(total_sum) }} ₽
+            </h3>
+            <p class="card-text">Сумма доходов и расходов по всем счетам.</p>
+          </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <h4>Распределение по сферам</h4>
+        {% if sphere_chart %}
+            {{ sphere_chart|safe }}
+        {% else %}
+            <p class="text-muted">Нет данных для отображения графика по сферам.</p>
+        {% endif %}
+    </div>
+    <div class="col-md-6">
+         <h4>Распределение по локациям</h4>
+        {% if location_chart %}
+            {{ location_chart|safe }}
+        {% else %}
+            <p class="text-muted">Нет данных для отображения графика по локациям.</p>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

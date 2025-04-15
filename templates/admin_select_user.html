@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Админ: Выбор пользователя{% endblock %}
+
+{% block content %}
+<h2>Просмотр от имени пользователя</h2>
+<hr>
+<p>Выберите пользователя, чтобы просмотреть и управлять его данными так, как видит их он.</p>
+
+{% if users %}
+<ul class="list-group">
+    {% for user in users %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+        {{ user.login }} (ID: {{ user.user_id }}) {% if user.admin %}<span class="badge bg-danger">Админ</span>{% endif %}
+        <a href="{{ url_for('admin_view_as', user_id=user.user_id) }}" class="btn btn-sm btn-info">Просмотреть как этот пользователь</a>
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p class="text-muted">Пользователи не найдены.</p>
+{% endif %}
+
+{% if session.get('selected_user_id') %}
+<hr>
+<p>Сейчас вы просматриваете как: <strong>{{ session.get('selected_user_login', 'N/A') }}</strong></p>
+<a href="{{ url_for('admin_view_as_self') }}" class="btn btn-secondary">Вернуться к своему профилю</a>
+{% endif %}
+
+{% endblock %}

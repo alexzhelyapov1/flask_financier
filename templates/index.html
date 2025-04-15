@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Главная - Финансист{% endblock %}
+
+{% block content %}
+<div class="px-4 py-5 my-5 text-center">
+    <h1 class="display-5 fw-bold">Система Финансового Учета "Финансист"</h1>
+    <div class="col-lg-6 mx-auto">
+      <p class="lead mb-4">Добро пожаловать! Войдите или зарегистрируйтесь, чтобы начать управлять своими финансами.</p>
+      <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+        {% if not current_user.is_authenticated %}
+        <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg px-4 gap-3">Вход</a>
+        <a href="{{ url_for('register') }}" class="btn btn-outline-secondary btn-lg px-4">Регистрация</a>
+        {% else %}
+         <a href="{{ url_for('dashboard') }}" class="btn btn-success btn-lg px-4 gap-3">Перейти к сводке</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Добавить запись - {{ eff_user_login }}{% endblock %}
+
+{% block content %}
+<h2>Добавить финансовую операцию {% if eff_user_login %}({{ eff_user_login }}){% endif %}</h2>
+<hr>
+
+<form method="POST" action="{{ url_for('add_record') }}" id="addRecordForm">
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label for="operation_type" class="form-label">Тип операции *</label>
+            <select class="form-select" id="operation_type" name="operation_type" required>
+                <option value="" selected disabled>-- Выберите тип --</option>
+                <option value="Income" {% if request.form.operation_type == 'Income' %}selected{% endif %}>Доход</option>
+                <option value="Spend" {% if request.form.operation_type == 'Spend' %}selected{% endif %}>Расход</option>
+                <option value="Transfer" {% if request.form.operation_type == 'Transfer' %}selected{% endif %}>Перевод</option>
+            </select>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="sum" class="form-label">Сумма (₽) *</label>
+            <input type="number" step="0.01" min="0.01" class="form-control" id="sum" name="sum" required value="{{ request.form.sum }}">
+        </div>
+    </div>
+
+    <div class="row">
+         <div class="col-md-6 mb-3">
+             <label for="location_id" class="form-label">Локация *</label>
+             <span class="field-hint" id="location_hint"> (Счет/кошелек)</span>
+             <select class="form-select" id="location_id" name="location_id" required>
+                 <option value="" selected disabled>-- Выберите локацию --</option>
+                 {% for loc in locations %}
+                     <option value="{{ loc.location_id }}" {% if request.form.get('location_id') and request.form.get('location_id')|int == loc.location_id %}selected{% endif %}>{{ loc.name }}</option>
+                 {% endfor %}
+             </select>
+         </div>
+         <div class="col-md-6 mb-3">
+             <label for="sphere_id" class="form-label">Сфера</label>
+              <span class="field-hint" id="sphere_hint"> (Категория)</span>
+             <select class="form-select" id="sphere_id" name="sphere_id">
+                 <option value="" selected>-- Выберите сферу (если применимо) --</option>
+                 {% for sphere in spheres %}
+                     <option value="{{ sphere.sphere_id }}" {% if request.form.get('sphere_id') and request.form.get('sphere_id')|int == sphere.sphere_id %}selected{% endif %}>{{ sphere.name }}</option>
+                 {% endfor %}
+             </select>
+             <div id="sphere_required_warning" class="text-danger field-hint" style="display: none;">Сфера обязательна для Дохода/Расхода.</div>
+         </div>
+    </div>
+
+    <!-- Опции для перевода -->
+    <div class="row transfer-options mt-3 p-3 border rounded bg-light">
+         <h5>Параметры перевода</h5>
+         <div class="col-md-12 mb-3">
+             <label class="form-label">Тип перевода *</label>
+             <div>
+                 <input type="radio" class="btn-check" name="transfer_type" id="transfer_location" value="location" autocomplete="off" {% if request.form.transfer_type == 'location' %}checked{% endif %}>
+                 <label class="btn btn-outline-primary" for="transfer_location">Между локациями</label>
+
+                 <input type="radio" class="btn-check" name="transfer_type" id="transfer_sphere" value="sphere" autocomplete="off" {% if request.form.transfer_type == 'sphere' %}checked{% endif %}>
+                 <label class="btn btn-outline-primary" for="transfer_sphere">Между сферами</label>
+             </div>
+         </div>
+
+         <div class="col-md-6 mb-3 transfer-target" id="transfer_location_target" style="display: none;">
+             <label for="peer_location_id" class="form-label">В локацию *</label>
+             <select class="form-select" id="peer_location_id" name="peer_location_id">
+                 <option value="" selected disabled>-- Выберите локацию назначения --</option>
+                 {% for loc in locations %}
+                     <option value="{{ loc.location_id }}" {% if request.form.get('peer_location_id') and request.form.get('peer_location_id')|int == loc.location_id %}selected{% endif %}>{{ loc.name }}</option>
+                 {% endfor %}
+             </select>
+             <div class="field-hint">Перевод произойдет в рамках выбранной выше сферы.</div>
+         </div>
+
+         <div class="col-md-6 mb-3 transfer-target" id="transfer_sphere_target" style="display: none;">
+             <label for="peer_sphere_id" class="form-label">В сферу *</label>
+             <select class="form-select" id="peer_sphere_id" name="peer_sphere_id">
+                 <option value="" selected disabled>-- Выберите сферу назначения --</option>
+                  {% for sphere in spheres %}
+                     <option value="{{ sphere.sphere_id }}" {% if request.form.get('peer_sphere_id') and request.form.get('peer_sphere_id')|int == sphere.sphere_id %}selected{% endif %}>{{ sphere.name }}</option>
+                 {% endfor %}
+             </select>
+              <div class="field-hint">Перевод произойдет в рамках выбранной выше локации.</div>
+         </div>
+    </div>
+
+
+    <div class="mb-3 mt-3">
+        <label for="description" class="form-label">Описание</label>
+        <textarea class="form-control" id="description" name="description" rows="3">{{ request.form.description }}</textarea>
+    </div>
+
+    <p class="field-hint">* - обязательные поля</p>
+    <button type="submit" class="btn btn-primary">Сохранить запись</button>
+    <a href="{{ url_for('history') }}" class="btn btn-secondary">Отмена</a>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Простой JS для показа/скрытия опций перевода
+    const operationTypeSelect = document.getElementById('operation_type');
+    const transferOptionsDiv = document.querySelector('.transfer-options');
+    const locationHint = document.getElementById('location_hint');
+    const sphereHint = document.getElementById('sphere_hint');
+    const sphereSelect = document.getElementById('sphere_id');
+    const sphereRequiredWarning = document.getElementById('sphere_required_warning');
+
+    const transferTypeRadios = document.querySelectorAll('input[name="transfer_type"]');
+    const transferLocationTarget = document.getElementById('transfer_location_target');
+    const transferSphereTarget = document.getElementById('transfer_sphere_target');
+
+    function toggleTransferOptions() {
+        const selectedType = operationTypeSelect.value;
+        if (selectedType === 'Transfer') {
+            transferOptionsDiv.style.display = 'block';
+            locationHint.textContent = ' (Локация ИЗ которой перевод)';
+            sphereHint.textContent = ' (Сфера ИЗ которой перевод)';
+            sphereRequiredWarning.style.display = 'none'; // Сфера не обязательна для самого Transfer, но для его подвидов
+            sphereSelect.required = false; // Снимаем required, если был установлен
+            toggleTransferTarget(); // Показать нужный peer select
+        } else {
+            transferOptionsDiv.style.display = 'none';
+            locationHint.textContent = ' (Счет/кошелек)';
+            sphereHint.textContent = ' (Категория)';
+            // Сфера обязательна для Income/Spend
+            sphereSelect.required = (selectedType === 'Income' || selectedType === 'Spend');
+            sphereRequiredWarning.style.display = sphereSelect.required ? 'block' : 'none';
+            // Скрыть оба peer select
+            if(transferLocationTarget) transferLocationTarget.style.display = 'none';
+            if(transferSphereTarget) transferSphereTarget.style.display = 'none';
+        }
+    }
+
+    function toggleTransferTarget() {
+        const selectedTransferType = document.querySelector('input[name="transfer_type"]:checked');
+        if (!selectedTransferType) {
+             if(transferLocationTarget) transferLocationTarget.style.display = 'none';
+             if(transferSphereTarget) transferSphereTarget.style.display = 'none';
+             sphereRequiredWarning.style.display = 'none'; // Еще не выбрали тип перевода
+             sphereSelect.required = false;
+            return;
+        }
+
+        const typeValue = selectedTransferType.value;
+        if (typeValue === 'location') {
+            if(transferLocationTarget) transferLocationTarget.style.display = 'block';
+            if(transferSphereTarget) transferSphereTarget.style.display = 'none';
+            // Для перевода между локациями нужна сфера
+            sphereSelect.required = true;
+            sphereRequiredWarning.style.display = 'block';
+            // Делаем select назначения обязательным
+             if(document.getElementById('peer_location_id')) document.getElementById('peer_location_id').required = true;
+             if(document.getElementById('peer_sphere_id')) document.getElementById('peer_sphere_id').required = false;
+
+        } else if (typeValue === 'sphere') {
+            if(transferLocationTarget) transferLocationTarget.style.display = 'none';
+            if(transferSphereTarget) transferSphereTarget.style.display = 'block';
+             // Для перевода между сферами сфера "откуда" не обязательна согласно API, но локация - да.
+             // Однако, чтобы выбрать сферу "куда", нужна и сфера "откуда". Логичнее требовать обе.
+             // Но формально по API, sphere_id может быть Null только при transfer.
+             // Для простоты потребуем и сферу "откуда"
+             sphereSelect.required = true; // Требуем сферу "откуда"
+             sphereRequiredWarning.style.display = 'block';
+             // Делаем select назначения обязательным
+             if(document.getElementById('peer_location_id')) document.getElementById('peer_location_id').required = false;
+             if(document.getElementById('peer_sphere_id')) document.getElementById('peer_sphere_id').required = true;
+        }
+    }
+
+
+    operationTypeSelect.addEventListener('change', toggleTransferOptions);
+    transferTypeRadios.forEach(radio => {
+        radio.addEventListener('change', toggleTransferTarget);
+    });
+
+    // Вызываем при загрузке, чтобы учесть значения из request.form (если была ошибка)
+    toggleTransferOptions();
+
+</script>
+{% endblock %}

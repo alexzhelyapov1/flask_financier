@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Редактировать Сферу - {{ sphere.name }}{% endblock %}
+
+{% block content %}
+<h2>Редактировать Сферу "{{ sphere.name }}" {% if eff_user_login %}({{ eff_user_login }}){% endif %}</h2>
+<hr>
+
+<form method="POST" action="{{ url_for('edit_sphere', sphere_id=sphere.sphere_id) }}">
+    <div class="mb-3">
+        <label for="name" class="form-label">Название *</label>
+        <input type="text" class="form-control" id="name" name="name" required value="{{ request.form.name or sphere.name }}">
+    </div>
+    <div class="mb-3">
+        <label for="description" class="form-label">Описание</label>
+        <textarea class="form-control" id="description" name="description" rows="3">{{ request.form.description or sphere.description | default('', true) }}</textarea>
+    </div>
+
+    {% if friends or sphere.user_read_ids or sphere.user_edit_ids %}
+    <div class="mb-3">
+        <label for="read_ids" class="form-label">Разрешить чтение друзьям владельца ({{ db.get_user_by_id(current_user.id, sphere.user_id).login }}):</label>
+        <select class="form-select" id="read_ids" name="read_ids" multiple size="5">
+            {% for friend_id, friend_login in friends.items() %}
+            <option value="{{ friend_id }}" {% if friend_id in (request.form.getlist('read_ids', type=int) or sphere.user_read_ids) %}selected{% endif %}>{{ friend_login }}</option>
+            {% endfor %}
+            <!-- Показываем тех, кто уже есть в списке, даже если они больше не друзья (редкий случай) -->
+            {% for user_id in sphere.user_read_ids if user_id not in friends %}
+             <option value="{{ user_id }}" selected>ID: {{ user_id }} (не друг)</option>
+            {% endfor %}
+        </select>
+         <div class="field-hint">Выберите одного или нескольких друзей (Ctrl+Click или Cmd+Click).</div>
+    </div>
+     <div class="mb-3">
+        <label for="edit_ids" class="form-label">Разрешить редактирование друзьям владельца:</label>
+        <select class="form-select" id="edit_ids" name="edit_ids" multiple size="5">
+             {% for friend_id, friend_login in friends.items() %}
+            <option value="{{ friend_id }}" {% if friend_id in (request.form.getlist('edit_ids', type=int) or sphere.user_edit_ids) %}selected{% endif %}>{{ friend_login }}</option>
+            {% endfor %}
+             {% for user_id in sphere.user_edit_ids if user_id not in friends %}
+             <option value="{{ user_id }}" selected>ID: {{ user_id }} (не друг)</option>
+            {% endfor %}
+        </select>
+         <div class="field-hint">Редактирование включает удаление!</div>
+    </div>
+    {% else %}
+    <p class="text-muted field-hint">У владельца сферы нет друзей для предоставления доступа.</p>
+    {% endif %}
+
+    <p class="field-hint">* - обязательные поля</p>
+    <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+    <a href="{{ url_for('spheres') }}" class="btn btn-secondary">Отмена</a>
+</form>
+
+{% endblock %}

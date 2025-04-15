@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Финансист{% endblock %}</title>
+    <!-- Подключаем Bootstrap CSS для стилизации -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <style>
+        body { padding-top: 5rem; } /* Отступ от фиксированной навигации */
+        .field-hint { font-size: 0.8em; color: #6c757d; }
+        .transfer-options { display: none; } /* Скрываем опции трансфера по умолчанию */
+    </style>
+  </head>
+  <body>
+
+    <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="{{ url_for('index') }}">Финансист</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+          <ul class="navbar-nav me-auto mb-2 mb-md-0">
+            {% if current_user.is_authenticated %}
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">Сводка</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'history' %}active{% endif %}" href="{{ url_for('history') }}">История</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'add_record' %}active{% endif %}" href="{{ url_for('add_record') }}">Добавить запись</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'spheres' %}active{% endif %}" href="{{ url_for('spheres') }}">Сферы</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if request.endpoint == 'locations' %}active{% endif %}" href="{{ url_for('locations') }}">Локации</a>
+              </li>
+              {% if current_user.admin %}
+              <li class="nav-item dropdown">
+                 <a class="nav-link dropdown-toggle {% if request.endpoint.startswith('admin_') %}active{% endif %}" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                   Админ
+                 </a>
+                 <ul class="dropdown-menu" aria-labelledby="adminDropdown">
+                   <li><a class="dropdown-item" href="{{ url_for('admin_select_user') }}">Выбрать пользователя</a></li>
+                   {% if session.get('selected_user_id') %}
+                   <li><a class="dropdown-item" href="{{ url_for('admin_view_as_self') }}">Вернуться к себе</a></li>
+                   {% endif %}
+                 </ul>
+               </li>
+              {% endif %}
+            {% endif %}
+          </ul>
+          <ul class="navbar-nav ms-auto mb-2 mb-md-0">
+             {% if current_user.is_authenticated %}
+                <li class="nav-item">
+                    <span class="navbar-text me-2">
+                        {% if session.get('selected_user_id') and current_user.admin %}
+                            Админ (как: {{ session.get('selected_user_login', 'N/A') }})
+                        {% else %}
+                            {{ current_user.login }} {% if current_user.admin %}(Админ){% endif %}
+                        {% endif %}
+                    </span>
+                </li>
+                <li class="nav-item">
+                   <a class="btn btn-outline-warning" href="{{ url_for('logout') }}">Выйти</a>
+                </li>
+             {% else %}
+                 <li class="nav-item">
+                   <a class="nav-link {% if request.endpoint == 'login' %}active{% endif %}" href="{{ url_for('login') }}">Вход</a>
+                 </li>
+                  <li class="nav-item">
+                   <a class="nav-link {% if request.endpoint == 'register' %}active{% endif %}" href="{{ url_for('register') }}">Регистрация</a>
+                 </li>
+             {% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container">
+      <!-- Сообщения Flash -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- Индикатор просмотра от имени другого пользователя -->
+      {% if current_user.is_authenticated and current_user.admin and session.get('selected_user_id') %}
+        <div class="alert alert-info" role="alert">
+          Вы просматриваете систему как пользователь <strong>{{ session.get('selected_user_login', 'N/A') }}</strong>. <a href="{{ url_for('admin_view_as_self') }}" class="alert-link">Вернуться к своему профилю</a>.
+        </div>
+      {% endif %}
+
+
+      {% block content %}{% endblock %}
+    </main>
+
+    <!-- Подключаем Bootstrap JS (нужен для Navbar и др.) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>
