@@ -2,3 +2,4 @@
 __pycache__
 test_app_db.sqlite
 app_database.db
+context_promt.txt
