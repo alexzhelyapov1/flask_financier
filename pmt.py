@@ -2,25 +2,26 @@ import os
 
 # 1. Список путей до файлов (относительные пути)
 # Замените этот список своими путями к файлам
+# find src toolchains CMakeLists.txt .gitmodules -type f
 file_paths = [
-    "app.py",
-    "db_api.py",
-    "templates/accounting_history.html",
-    "templates/add_record.html",
-    "templates/admin_select_user.html",
-    "templates/base.html",
-    "templates/dashboard.html",
-    "templates/edit_location.html",
-    "templates/edit_sphere.html",
-    "templates/index.html",
-    "templates/locations.html",
-    "templates/login.html",
-    "templates/register.html",
-    "templates/spheres.html",
+    'app.py',
+    'db_api.py',
+    'templates/dashboard.html',
+    'templates/edit_location.html',
+    'templates/spheres.html',
+    'templates/admin_select_user.html',
+    'templates/base.html',
+    'templates/add_record.html',
+    'templates/locations.html',
+    'templates/login.html',
+    'templates/index.html',
+    'templates/accounting_history.html',
+    'templates/register.html',
+    'templates/edit_sphere.html',
 ]
 
 # Имя выходного файла
-output_filename = "context_promt.txt"
+output_filename = "context.txt"
 
 # Кодировка для чтения и записи файлов (рекомендуется UTF-8)
 encoding = 'utf-8'
@@ -34,7 +35,7 @@ try:
         for file_path in file_paths:
             # print(f"Обработка: {file_path}")
             # Записываем разделитель и путь к файлу
-            outfile.write(f"--- File: {file_path} ---\n")
+            outfile.write(f"{'-' * 29}\n--- File: {file_path} ---\n{'-' * 29}\n")
 
             # Проверяем, существует ли файл
             if os.path.exists(file_path):
